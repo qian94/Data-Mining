@@ -1,0 +1,84 @@
+---
+title: "Data Mining HW2"
+author: "宋倩 统计系 15420161152176"
+date: "2018/3/27"
+output: html_document
+---
+
+```{r}
+library(ISLR)
+library(ggplot2)
+library(MASS)
+library(class)
+```
+```{r}
+#生成数据
+mpg01 <- Auto$mpg-median(Auto$mpg)
+mpg01[mpg01>0] <- 1
+mpg01[mpg01<0] <- 0
+Auto01 <- cbind(mpg01,Auto[-c(1,9)])
+```
+```{r}
+#选取变量
+pf1 <- function(x)plot(x,mpg01)
+pf2 <- function(y){
+  ggplot(Auto01,aes(as.factor(mpg01),y,fill=as.factor(mpg01)))+
+  geom_boxplot()
+}
+apply(Auto01[2:8],2,pf1)
+apply(Auto01[2:8],2,pf2)
+
+cor(Auto01)
+```
+  
+  观察散点图、箱线图和相关系数矩阵可以得出，变量cylinders、displacement、horsepower、weight与mpg的相关性较强，可以用来预测mpg，需要注意cylinders是离散型变量，在LDA、QDA中不使用此变量。
+  
+###LDA
+```{r}
+set.seed(1234)
+train <- sample(nrow(Auto01),0.8*nrow(Auto01),replace = FALSE)
+test <- Auto01[-train,]
+lda.fit=lda(mpg01~displacement+horsepower+weight,data=Auto01,subset=train)
+lda.fit
+plot(lda.fit)
+lda.pred=predict(lda.fit,test)
+lda.class=lda.pred$class
+table(lda.class,test$mpg01)
+mean(lda.class!=test$mpg01)
+```
+
+###QDA
+```{r}
+qda.fit=qda(mpg01~displacement+horsepower+weight,data=Auto01,subset=train)
+qda.fit
+qda.pred=predict(qda.fit,test)
+qda.class=qda.pred$class
+table(qda.class,test$mpg01)
+mean(qda.class!=test$mpg01)
+```
+
+###Logistic regression
+```{r}
+glm.fit=glm(mpg01 ~ cylinders+displacement + horsepower + weight, data = Auto01[train,],family=binomial)
+summary(glm.fit)
+glm.probs=predict(glm.fit,test,type="response")
+glm.pred=rep(0,length(glm.probs))
+glm.pred[glm.probs >.5]=1    
+table(glm.pred,test$mpg01)
+mean(glm.pred!=test$mpg01)
+```
+
+###KNN
+```{r}
+attach(Auto01)
+train.X=cbind(cylinders,displacement,horsepower,weight)[train ,]
+test.X=cbind(cylinders,displacement,horsepower,weight)[-train,]
+train.mpg01 =mpg01[train]
+set.seed (123)
+knn.pred=knn(train.X,test.X,train.mpg01,k=3)
+table(knn.pred,test$mpg01)
+mean(knn.pred!=test$mpg01)
+detach(Auto01)
+```
+  
+  从测试集的错判率来看，在此数据集中LDA和logistic regression的分类效果较好，为6.3%。

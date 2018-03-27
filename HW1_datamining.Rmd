@@ -1,0 +1,108 @@
+---
+title: "HW1_datamining"
+author: "宋倩 统计系 15420161152176"
+date: "2018/3/13"
+output: html_document
+---
+## 13.
+### (a)(b)(c)
+```{r}
+set.seed(1)
+x <- rnorm(100,0,1)
+eps <- rnorm(100,0,sqrt(0.25))
+y <- -1+0.5*x+eps
+length(y)
+```
+
+  The length of the vector y is 100, and $\beta_0=-1,\beta_1=0.5$ in this model.  
+ 
+### (d)(e)(f)
+```{r}
+plot(x,y)
+fit1 <- lm(y~x)
+summary(fit1)
+abline(fit1)
+abline(a=-1,b=0.5,col=2)
+legend("bottomright",c("the least square","the populiation regression"),col=c(1,2),lty=1)
+```
+ 
+  We can see from the scatterplot that the mean of y increases when x increases. And the estimated coefficients $\hat\beta_0$ and $\hat\beta_1$ are very closer to the true value.  
+  
+### (g)
+```{r}
+fit2 <- lm(y~x+I(x^2))
+summary(fit2)
+```
+  
+  Adding the quadratic term to the model, the adjusted $R^2$ has barely changed, and the variable $x^2$ is not significant. There is no evidence that the quadratic term improves the model fit.  
+  
+### (h)
+```{r}
+set.seed(1)
+x <- rnorm(100,0,1)
+eps1 <- rnorm(100,0,sqrt(0.01))
+y1 <- -1+0.5*x+eps1
+plot(x,y1)
+summary(lm(y1~x))
+abline(lm(y1~x))
+abline(a=-1,b=0.5,col=2)
+legend("bottomright",c("the least square","the populiation regression"),col=c(1,2),lty=1)
+```
+  
+  The least square line and the population regression line are almost coincident with the less noisy data. And adjusted $R^2$ increases to 0.956. x can explain y better in this situation.  
+  
+### (i)
+```{r}
+set.seed(1)
+x <- rnorm(100,0,1)
+eps2 <- rnorm(100,0,sqrt(4))
+y2 <- -1+0.5*x+eps2
+plot(x,y2)
+summary(lm(y2~x))
+abline(lm(y2~x))
+abline(a=-1,b=0.5,col=2)
+legend("bottomright",c("the least square","the populiation regression"),col=c(1,2),lty=1)
+```
+   
+   With the noiser data, x may become insignificant, and the $R^2$ is very small. We can't predict y well using x.  
+  
+### (j)
+```{r}
+confint(fit1)
+confint(lm(y1~x))
+confint(lm(y2~x))
+```
+  
+  The confidence intervals for $\beta_0$ and $\beta_1$ based on the less noisy data set is shorter than the original, but that on the noiser data set is longer. The estimated coefficients based on less noisy data set is more accurate.
+  
+##15.  
+###(a)
+```{r}
+library(MASS)
+```
+```{r}
+uni_fit <- apply(Boston[2:14],2,function(x){lm(Boston$crim~x)})
+lapply(uni_fit,summary)
+uni_coef <- c()
+for(i in 1:13)uni_coef[i] <- coef(uni_fit[[i]])[2]
+```
+  
+  Almost all the predictors are significant, but their respective explaination to y, i.e. $R^2$ is small. There is no statistically significant association between the predictor $chas$ and the response.
+  
+###(b)(c)
+```{r}
+mul_fit <- lm(crim~.,data = Boston)
+summary(mul_fit)
+mul_coef <- coef(mul_fit)[-1]
+plot(uni_coef,mul_coef)
+abline(a=0,b=1)
+```
+  
+  Only the predictor $zn$、$dis$、$rad$、$black$、$medv$ are significant at 95% confidence level. This result is obviously different from the conclusion of (b).
+  
+###(d)
+```{r}
+apply(Boston[2:14],2,function(x){summary(lm(Boston$crim~x+I(x^2)+I(x^3)))})
+```
+  
+  Many coeffients are significant, so the predictors $indus$、$nox$、$age$、$dis$、$ptratio$、$medv$ may have non-linear association with $crim$.
